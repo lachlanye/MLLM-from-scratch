@@ -141,6 +141,11 @@ def train(config: dict):
             torch.save(model.state_dict(), train_cfg['model_save_path'])
             print(f"New best model saved with accuracy: {accuracy:.2f}%")
 
+    # Save the last model as well
+    last_model_path = os.path.join(train_cfg['log_dir'], "last.ckpt")
+    torch.save(model.state_dict(), last_model_path)
+    print(f"Last model saved to {last_model_path}")
+
     print(f"Training complete. Best accuracy: {best_accuracy:.2f}%")
     writer.close()
 

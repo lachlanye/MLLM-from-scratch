@@ -1,0 +1,5 @@
+notebooks/vit_cifar10_colab.ipynb
+__pycache__/
+*.pyc
+.DS_Store
+runs/

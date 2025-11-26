@@ -103,11 +103,11 @@ class ViT(nn.Module):
         num_patches = self.patch_embedding.n_patches
 
         # [CLS] token is a learnable parameter that will aggregate global image features.
-        self.cls_token = nn.Parameter(torch.randn(1, 1, d_model))
+        self.cls_token = nn.Parameter(torch.randn(1, 1, d_model) * 0.02)
 
         # Positional embeddings for each patch and the [CLS] token.
         self.pos_embedding = nn.Parameter(
-            torch.randn(1, num_patches + 1, d_model))
+            torch.randn(1, num_patches + 1, d_model) * 0.02)
 
         self.dropout = nn.Dropout(dropout)
 
