@@ -5,12 +5,14 @@ import torch.nn as nn
 from typing import Optional
 from transformer_from_scratch.model import TransformerEncoder
 
+
 class PatchEmbedding(nn.Module):
     """
     Converts a batch of images into a sequence of flattened patch embeddings.
-    
+
     This is achieved efficiently using a single convolutional layer.
     """
+
     def __init__(self, img_size: int, patch_size: int, in_channels: int, d_model: int):
         """
         Args:
@@ -22,7 +24,7 @@ class PatchEmbedding(nn.Module):
         super().__init__()
         if img_size % patch_size != 0:
             raise ValueError("Image size must be divisible by patch size.")
-            
+
         self.img_size = img_size
         self.patch_size = patch_size
         self.n_patches = (img_size // patch_size) ** 2
@@ -48,32 +50,34 @@ class PatchEmbedding(nn.Module):
         """
         # Project images into patches: [B, C, H, W] -> [B, D, H/P, W/P]
         x = self.projection(x)
-        
+
         # Flatten the spatial dimensions: [B, D, H/P, W/P] -> [B, D, N]
         x = x.flatten(2)
-        
+
         # Transpose to get the sequence dimension first: [B, D, N] -> [B, N, D]
         x = x.transpose(1, 2)
-        
+
         return x
+
 
 class ViT(nn.Module):
     """
     The Vision Transformer (ViT) model.
-    
+
     This model can be used for two purposes:
     1. Image Classification: If `num_classes` is provided, it acts as a standard ViT classifier.
     2. Feature Extraction: If `num_classes` is None, it acts as a vision encoder,
        outputting the sequence of patch embeddings for use in downstream tasks like MLLMs.
     """
-    def __init__(self, 
-                 img_size: int, 
-                 patch_size: int, 
-                 in_channels: int, 
-                 d_model: int, 
-                 num_layers: int, 
-                 n_heads: int, 
-                 d_ff: int, 
+
+    def __init__(self,
+                 img_size: int,
+                 patch_size: int,
+                 in_channels: int,
+                 d_model: int,
+                 num_layers: int,
+                 n_heads: int,
+                 d_ff: int,
                  num_classes: Optional[int] = None,
                  dropout: float = 0.1):
         """
@@ -91,22 +95,25 @@ class ViT(nn.Module):
             dropout (float): Dropout rate.
         """
         super().__init__()
-        
+
         self.num_classes = num_classes
-        
-        self.patch_embedding = PatchEmbedding(img_size, patch_size, in_channels, d_model)
+
+        self.patch_embedding = PatchEmbedding(
+            img_size, patch_size, in_channels, d_model)
         num_patches = self.patch_embedding.n_patches
-        
+
         # [CLS] token is a learnable parameter that will aggregate global image features.
         self.cls_token = nn.Parameter(torch.randn(1, 1, d_model))
-        
+
         # Positional embeddings for each patch and the [CLS] token.
-        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, d_model))
-        
+        self.pos_embedding = nn.Parameter(
+            torch.randn(1, num_patches + 1, d_model))
+
         self.dropout = nn.Dropout(dropout)
-        
-        self.encoder = TransformerEncoder(num_layers, d_model, n_heads, d_ff, dropout)
-        
+
+        self.encoder = TransformerEncoder(
+            num_layers, d_model, n_heads, d_ff, dropout)
+
         # The classification head is only created if num_classes is specified.
         if num_classes is not None:
             self.mlp_head = nn.Sequential(
@@ -192,7 +199,7 @@ class ViT(nn.Module):
             # a. 从特征序列中提取 [CLS] 词元的输出 (它位于序列的第一个位置)
             #    - Shape: [B, D]
             cls_output = features[:, 0]
-            
+
             # b. 将 [CLS] 词元的输出送入分类头 (self.mlp_head) 以获得 logits
             #    - Shape: [B, num_classes]
             logits = self.mlp_head(cls_output)
@@ -201,5 +208,5 @@ class ViT(nn.Module):
             # --- 特征提取模式 ---
             # 直接返回编码器的完整输出序列
             return features
-            
+
     # --- END OF STUDENT MODIFICATION ---
