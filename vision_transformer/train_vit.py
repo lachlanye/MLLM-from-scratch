@@ -27,7 +27,7 @@ def train(config: dict):
     log_dir = train_cfg.get('log_dir', './runs')
     writer = SummaryWriter(log_dir=log_dir)
 
-    os.makedirs(data_cfg['root_dir'], exist_ok=True)
+    os.makedirs(data_cfg['data_dir'], exist_ok=True)
     train_transform = transforms.Compose([
         transforms.RandomResizedCrop(data_cfg['img_size'], scale=(0.8, 1.0)),
         transforms.RandomHorizontalFlip(),
@@ -40,9 +40,9 @@ def train(config: dict):
         transforms.Normalize(mean=data_cfg['mean'], std=data_cfg['std'])
     ])
     train_dataset = CIFAR10Dataset(
-        root=data_cfg['root_dir'], train=True, transform=train_transform, download=True)
+        root=data_cfg['data_dir'], train=True, transform=train_transform, download=True)
     test_dataset = CIFAR10Dataset(
-        root=data_cfg['root_dir'], train=False, transform=test_transform, download=True)
+        root=data_cfg['data_dir'], train=False, transform=test_transform, download=True)
     train_loader = DataLoader(
         train_dataset, batch_size=train_cfg['batch_size'], shuffle=True, num_workers=train_cfg['num_workers'], pin_memory=True)
     test_loader = DataLoader(
@@ -85,7 +85,7 @@ def train(config: dict):
 
             train_loss += loss.item()
             train_loop.set_postfix(loss=loss.item())
-            
+
             # Log to TensorBoard
             global_step = epoch * len(train_loader) + batch_idx
             writer.add_scalar('Train/Loss', loss.item(), global_step)
@@ -125,7 +125,7 @@ def train(config: dict):
 
         print(
             f"Epoch {epoch+1}/{train_cfg['num_epochs']} | Train Loss: {avg_train_loss:.4f} | Test Loss: {avg_test_loss:.4f} | Accuracy: {accuracy:.2f}%")
-        
+
         # Log epoch metrics
         writer.add_scalar('Train/AvgLoss', avg_train_loss, epoch)
         writer.add_scalar('Test/AvgLoss', avg_test_loss, epoch)
@@ -146,9 +146,12 @@ def train(config: dict):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train ViT on CIFAR-10")
-    parser.add_argument("--config", type=str, required=True, help="Path to config file")
-    parser.add_argument("--device", type=str, default="cuda", help="Device to use")
-    parser.add_argument("--log_dir", type=str, default="./runs", help="Directory for TensorBoard logs")
+    parser.add_argument("--config", type=str, required=True,
+                        help="Path to config file")
+    parser.add_argument("--device", type=str,
+                        default="cuda", help="Device to use")
+    parser.add_argument("--log_dir", type=str, default="./runs",
+                        help="Directory for TensorBoard logs")
     args = parser.parse_args()
 
     config = parse_config(args.config)
@@ -156,8 +159,9 @@ if __name__ == "__main__":
     # Override config with args
     config['training_params']['device'] = args.device
     config['training_params']['log_dir'] = args.log_dir
-    
+
     # Update model save path to be inside log_dir
-    config['training_params']['model_save_path'] = os.path.join(args.log_dir, "best.ckpt")
+    config['training_params']['model_save_path'] = os.path.join(
+        args.log_dir, "best.ckpt")
 
     train(config)
