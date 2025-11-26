@@ -29,7 +29,7 @@ class PositionwiseFeedForward(nn.Module):
         # --- END YOUR CODE ---
 
         self.dropout = nn.Dropout(dropout)
-        self.layer_norm = nn.LayerNorm(d_model)
+        # self.layer_norm = nn.LayerNorm(d_model) <-- Removed for Pre-LN refactor
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -52,8 +52,8 @@ class PositionwiseFeedForward(nn.Module):
         output = self.w_2(output)
         output = self.dropout(output)
 
-        # 3. Add & Norm: 添加残差连接并应用 Layer Normalization。
-        output = self.layer_norm(output + residual)
+        # 3. Add & Norm: Removed for Pre-LN refactor.
+        # output = self.layer_norm(output + residual)
 
         return output
         # --- END YOUR CODE ---

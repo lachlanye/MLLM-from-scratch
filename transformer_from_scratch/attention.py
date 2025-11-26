@@ -92,7 +92,7 @@ class MultiHeadAttention(nn.Module):
 
         self.attention = ScaledDotProductAttention(dropout)
         self.dropout = nn.Dropout(dropout)
-        self.layer_norm = nn.LayerNorm(d_model)
+        # self.layer_norm = nn.LayerNorm(d_model)  <-- Removed for Pre-LN refactor
 
     def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor, mask: torch.Tensor = None) -> torch.Tensor:
         """
@@ -144,8 +144,8 @@ class MultiHeadAttention(nn.Module):
         output = self.fc(context)
         output = self.dropout(output)
 
-        # 6. Add & Norm: 添加残差连接并应用 Layer Normalization。
-        output = self.layer_norm(output + residual)
+        # 6. Add & Norm: Removed for Pre-LN refactor.
+        # output = self.layer_norm(output + residual)
 
         return output
         # --- END YOUR CODE ---
