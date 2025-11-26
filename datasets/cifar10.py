@@ -5,10 +5,12 @@ from torch.utils.data import Dataset
 from torchvision.datasets import CIFAR10
 from PIL.Image import Image
 
+
 class CIFAR10Dataset(Dataset):
     """
     A wrapper for the torchvision CIFAR-10 dataset.
     """
+
     def __init__(self, root: str = "data", train: bool = True, transform=None, download: bool = True):
         self.transform = transform
         self.cifar10 = CIFAR10(root=root, train=train, download=download)
@@ -25,13 +27,38 @@ class CIFAR10Dataset(Dataset):
         image, label = self.cifar10[idx]
 
         # --- START OF STUDENT MODIFICATION ---
-        
+
         # TODO: 应用图像变换
         # 如果 self.transform 不为 None，则需要将它应用到 image 上。
         # 这是 PyTorch 数据集处理的标准流程。
         if self.transform:
             image = self.transform(image)
-        
+
         # --- END OF STUDENT MODIFICATION ---
-        
+
         return image, label
+
+
+def build_cifar10_datasets(
+    data_dir: str = "data",
+    train_transform=None,
+    test_transform=None,
+    download: bool = True,
+):
+    """Utility that returns train/test datasets with optional transforms."""
+
+    train_dataset = CIFAR10Dataset(
+        root=data_dir,
+        train=True,
+        transform=train_transform,
+        download=download,
+    )
+
+    test_dataset = CIFAR10Dataset(
+        root=data_dir,
+        train=False,
+        transform=test_transform,
+        download=download,
+    )
+
+    return train_dataset, test_dataset
