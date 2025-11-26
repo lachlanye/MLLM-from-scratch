@@ -44,9 +44,9 @@ def train(config: dict):
     test_dataset = CIFAR10Dataset(
         root=data_cfg['data_dir'], train=False, transform=test_transform, download=True)
     train_loader = DataLoader(
-        train_dataset, batch_size=train_cfg['batch_size'], shuffle=True, num_workers=train_cfg['num_workers'], pin_memory=True)
+        train_dataset, batch_size=train_cfg['batch_size'], shuffle=True, num_workers=train_cfg.get('num_workers', 2), pin_memory=True)
     test_loader = DataLoader(
-        test_dataset, batch_size=train_cfg['batch_size'], shuffle=False, num_workers=train_cfg['num_workers'], pin_memory=True)
+        test_dataset, batch_size=train_cfg['batch_size'], shuffle=False, num_workers=train_cfg.get('num_workers', 2), pin_memory=True)
 
     model = ViT(img_size=data_cfg['img_size'], in_channels=data_cfg['in_channels'],
                 num_classes=data_cfg['num_classes'], **model_cfg).to(DEVICE)
@@ -54,7 +54,7 @@ def train(config: dict):
     optimizer = optim.AdamW(model.parameters(
     ), lr=train_cfg['learning_rate'], weight_decay=train_cfg['weight_decay'])
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=train_cfg['scheduler_T_max'])
+        optimizer, T_max=train_cfg.get('scheduler_T_max', train_cfg['num_epochs']))
 
     best_accuracy = 0.0
     for epoch in range(train_cfg['num_epochs']):
