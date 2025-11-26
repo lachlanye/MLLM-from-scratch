@@ -49,6 +49,7 @@ def train(config: dict):
         test_dataset, batch_size=train_cfg['batch_size'], shuffle=False, num_workers=train_cfg.get('num_workers', 2), pin_memory=True)
 
     model = ViT(img_size=data_cfg['img_size'], in_channels=data_cfg['in_channels'],
+                patch_size=data_cfg['patch_size'],
                 num_classes=data_cfg['num_classes'], **model_cfg).to(DEVICE)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.AdamW(model.parameters(
