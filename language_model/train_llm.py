@@ -9,6 +9,7 @@ from tqdm import tqdm
 from datasets.tinyshakespeare import TinyShakespeareDataset
 from language_model.llm import GPTModel
 from utils.training_utils import set_seed
+from utils.config_parser import parse_config
 
 
 @torch.no_grad()
@@ -135,3 +136,21 @@ def train(config: dict):
                     f"New best model saved to {train_cfg['model_save_path']} with Val Loss: {avg_val_loss:.4f}")
 
     print("Training finished.")
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Train GPT-style language model on Tiny Shakespeare"
+    )
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="configs/llm_config.yaml",
+        help="Path to YAML config file",
+    )
+    args = parser.parse_args()
+
+    cfg = parse_config(args.config)
+    train(cfg)
