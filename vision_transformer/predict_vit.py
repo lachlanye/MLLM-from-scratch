@@ -84,3 +84,22 @@ def predict(config: dict):
     print(f"  -> Predicted Class: '{predicted_class}'")
     print(f"  -> Confidence: {confidence.item():.4f}")
     print("-------------------------")
+
+
+if __name__ == "__main__":
+    import argparse
+    from utils.config_parser import parse_config
+
+    parser = argparse.ArgumentParser(description="Predict using trained ViT model")
+    parser.add_argument("--config", type=str, default="configs/vit_config.yaml",
+                        help="Path to YAML config file")
+    parser.add_argument("--image", type=str, default=None,
+                        help="Path or URL to image for prediction (overrides config)")
+    args = parser.parse_args()
+
+    cfg = parse_config(args.config)
+    
+    if args.image:
+        cfg['prediction_params']['image_source'] = args.image
+
+    predict(cfg)

@@ -201,3 +201,16 @@ def train(config):
                 print(f"New best model saved to {paths_cfg['best_model_save_path']} with Val Loss: {avg_val_loss:.4f}\n")
 
     print("Training finished.")
+
+
+if __name__ == "__main__":
+    import argparse
+    from utils.config_parser import parse_config
+
+    parser = argparse.ArgumentParser(description="Train MLLM (ViT + GPT)")
+    parser.add_argument("--config", type=str, default="configs/mllm_config.yaml",
+                        help="Path to YAML config file")
+    args = parser.parse_args()
+
+    cfg = parse_config(args.config)
+    train(cfg)

@@ -139,3 +139,26 @@ def inference(config: dict):
     else:
         print(">>> No ground-truth captions found for this image.")
     print("-" * 50)
+
+
+if __name__ == "__main__":
+    import argparse
+    from utils.config_parser import parse_config
+
+    parser = argparse.ArgumentParser(description="Inference with MLLM")
+    parser.add_argument("--config", type=str, default="configs/mllm_config.yaml",
+                        help="Path to YAML config file")
+    parser.add_argument("--image", type=str, default=None,
+                        help="Path to image for inference (overrides config)")
+    parser.add_argument("--prompt", type=str, default=None,
+                        help="Prompt for generation (overrides config)")
+    args = parser.parse_args()
+
+    cfg = parse_config(args.config)
+    
+    if args.image:
+        cfg['generation']['inference_image_path'] = args.image
+    if args.prompt:
+        cfg['generation']['prompt'] = args.prompt
+
+    inference(cfg)
