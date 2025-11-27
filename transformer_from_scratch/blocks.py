@@ -67,7 +67,7 @@ class DecoderBlock(nn.Module):
         self.norm3 = nn.LayerNorm(d_model)
         # --- END YOUR CODE ---
 
-    def forward(self, tgt: torch.Tensor, enc_src: Optional[torch.Tensor], tgt_mask: Optional[torch.Tensor], src_mask: Optional[torch.Tensor]) -> torch.Tensor:
+    def forward(self, tgt: torch.Tensor, enc_src: Optional[torch.Tensor] = None, tgt_mask: Optional[torch.Tensor] = None, src_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
         """
         Args:
             tgt (torch.Tensor): DecoderBlock的输入, shape [B, L_tgt, d_model]
