@@ -86,3 +86,21 @@ def generate(config: dict):
     # --- END OF STUDENT MODIFICATION (GENERATION LOOP) ---
 
     print("\n\n--- End of Generation ---")
+
+
+if __name__ == "__main__":
+    import argparse
+    from utils.config_parser import parse_config
+
+    parser = argparse.ArgumentParser(
+        description="Generate text using trained GPT model")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="configs/llm_config.yaml",
+        help="Path to YAML config file",
+    )
+    args = parser.parse_args()
+
+    cfg = parse_config(args.config)
+    generate(cfg)
