@@ -15,11 +15,11 @@ data_params:
 model_params:
   # vocab_size will be determined by the tokenizer after reading the data.
   # We leave it here as a placeholder, but it will be updated in the training script.
-  vocab_size: 65 
-  d_model: 384        # Embedding dimension
-  num_layers: 6       # Number of Transformer Decoder layers
-  n_heads: 6          # Number of attention heads (d_model must be divisible by n_heads)
-  d_ff: 1536          # Hidden dimension of the FeedForward network (often 4 * d_model)
+  vocab_size: 65
+  d_model: 384 # Embedding dimension
+  num_layers: 6 # Number of Transformer Decoder layers
+  n_heads: 6 # Number of attention heads (d_model must be divisible by n_heads)
+  d_ff: 1536 # Hidden dimension of the FeedForward network (often 4 * d_model)
   dropout: 0.1
 
 # --- Training Parameters ---
@@ -29,7 +29,7 @@ training_params:
   weight_decay: 0.01
   num_epochs: 500
   # Device can be 'cuda', 'cpu', or 'mps' for Apple Silicon
-  device: "cuda" 
+  device: "cuda"
   num_workers: 4
   model_save_path: "checkpoints/llm_tinyshakespeare.pth"
   # How often to print validation loss (in epochs)

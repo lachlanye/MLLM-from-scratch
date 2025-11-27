@@ -75,7 +75,7 @@ class TinyShakespeareDataset(Dataset):
     def __len__(self) -> int:
         # 使用 stride 计算数据集长度
         if self.stride is None:
-             return len(self.data) - self.block_size
+            return len(self.data) - self.block_size
         return (len(self.data) - self.block_size) // self.stride
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
