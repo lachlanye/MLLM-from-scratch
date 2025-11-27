@@ -27,12 +27,14 @@ class TinyShakespeareDataset(Dataset):
     continuous context.
     """
 
-    def __init__(self, root: str = "data", block_size: int = 128, download: bool = True):
+    def __init__(self, root: str = "data", block_size: int = 128, download: bool = True, stride: int = None):
         self.url = "https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt"
         data_dir = os.path.join(root, "tinyshakespeare")
         self.filepath = os.path.join(data_dir, "input.txt")
         self.vocab_path = os.path.join(data_dir, "vocab.json")
         self.block_size = block_size
+        # 默认步长为 block_size，即不重叠切分，这样可以大大减少数据量，加快训练速度
+        self.stride = stride if stride is not None else block_size
 
         if download:
             download_file(self.url, self.filepath)
@@ -71,7 +73,10 @@ class TinyShakespeareDataset(Dataset):
         return self.tokenizer.decode(l)
 
     def __len__(self) -> int:
-        return len(self.data) - self.block_size
+        # 使用 stride 计算数据集长度
+        if self.stride is None:
+             return len(self.data) - self.block_size
+        return (len(self.data) - self.block_size) // self.stride
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         """
@@ -88,10 +93,13 @@ class TinyShakespeareDataset(Dataset):
         """
         # --- START OF STUDENT MODIFICATION ---
 
+        # 计算实际的起始位置
+        start_idx = idx * self.stride
+
         # TODO: 1. 从 self.data 中提取一个长度为 `self.block_size + 1` 的数据块。
         #    - 这个块将同时用于生成输入 `x` 和目标 `y`。
         #    - 起始位置由 `idx` 决定。
-        chunk = self.data[idx: idx + self.block_size + 1]
+        chunk = self.data[start_idx: start_idx + self.block_size + 1]
 
         # TODO: 2. 创建输入序列 x。
         #    - `x` 应该是 `chunk` 的前 `block_size` 个字符。
