@@ -55,14 +55,40 @@ def build_tokenizer(corpus_path, save_path):
     return tokenizer
 
 
+def train_one_epoch(model, dataloader, optimizer, criterion, device, epoch):
+    model.train()
+    total_loss = 0
+    loop = tqdm(dataloader, leave=True, desc=f"Epoch {epoch+1} [Train]")
+
+    for images, captions in loop:
+        images, captions = images.to(device), captions.to(device)
+        optimizer.zero_grad(set_to_none=True)
+
+        model_input_text = captions[:, :-1]
+        targets = captions[:, 1:]
+
+        logits, num_visual_tokens = model(images, model_input_text)
+
+        labels = torch.full((logits.shape[0], logits.shape[1]),
+                            criterion.ignore_index, device=device, dtype=torch.long)
+        label_start_idx = num_visual_tokens
+        label_end_idx = num_visual_tokens + targets.shape[1]
+        labels[:, label_start_idx:label_end_idx] = targets
+
+        loss = criterion(logits.view(-1, logits.size(-1)), labels.view(-1))
+
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item()
+        loop.set_postfix(loss=loss.item())
+
+    return total_loss / len(dataloader)
+
+
 def train(config):
     """
     The main training function for the Multimodal Large Language Model (MLLM).
-
-    [ 任务 ]
-    1. 在训练循环中，正确地准备语言模型的输入 (model_input_text) 和目标 (targets)。
-    2. 在训练循环中，实现最关键的损失计算逻辑，确保只计算文本部分的损失。
-    3. 在评估循环中，应用与训练循环中相同的损失计算逻辑。
     """
     # --- 0. Setup ---
     device = get_device(config['training']['device'])
@@ -80,9 +106,32 @@ def train(config):
     pad_token_id = tokenizer.get_pad_token_id()
 
     # --- 2. Initialize Models ---
-    vision_encoder = ViT(...).to(device)  # Simplified for brevity
-    language_model = GPTModel(...).to(device)  # Simplified for brevity
-    connector = Connector(...).to(device)  # Simplified for brevity
+    vision_encoder = ViT(
+        img_size=model_cfg['vision_encoder']['image_size'],
+        patch_size=model_cfg['vision_encoder']['patch_size'],
+        in_chans=model_cfg['vision_encoder']['in_chans'],
+        embed_dim=model_cfg['vision_encoder']['embed_dim'],
+        depth=model_cfg['vision_encoder']['depth'],
+        num_heads=model_cfg['vision_encoder']['num_heads'],
+        mlp_ratio=model_cfg['vision_encoder']['mlp_ratio'],
+        dropout=model_cfg['dropout']
+    ).to(device)
+
+    language_model = GPTModel(
+        vocab_size=vocab_size,
+        d_model=model_cfg['language_model']['d_model'],
+        n_head=model_cfg['language_model']['n_head'],
+        n_layer=model_cfg['language_model']['n_layer'],
+        max_len=model_cfg['language_model']['max_len'],
+        dropout=model_cfg['dropout']
+    ).to(device)
+
+    connector = Connector(
+        vision_dim=model_cfg['vision_encoder']['embed_dim'],
+        language_dim=model_cfg['language_model']['d_model'],
+        connector_type=model_cfg['connector']['type']
+    ).to(device)
+
     mllm = MLLM(vision_encoder, language_model,
                 connector, tokenizer).to(device)
     mllm.freeze_parameters(train_cfg['freeze_vit'], train_cfg['freeze_llm'])
@@ -121,68 +170,8 @@ def train(config):
     print("Starting MLLM training...")
 
     for epoch in range(train_cfg['epochs']):
-        mllm.train()
-        total_train_loss = 0
-        train_loop = tqdm(train_loader, leave=True,
-                          desc=f"Epoch {epoch+1}/{train_cfg['epochs']} [Train]")
-        for images, captions in train_loop:
-            images, captions = images.to(device), captions.to(device)
-            optimizer.zero_grad(set_to_none=True)
-
-            # --- START OF STUDENT TASK 1 ---
-            # TODO: 为语言模型准备输入 (model_input_text) 和目标 (targets)。
-            # 对于一个自回归模型，输入是序列的前n-1个token，目标是序列的后n-1个token。
-            # 例如，如果完整序列是 [<sos>, "a", "cat", <eos>]
-            # 输入应该是: [<sos>, "a", "cat"]
-            # 目标应该是: ["a", "cat", <eos>]
-            # 提示: 使用 Python 的切片操作。`captions` 的形状是 [B, SeqLen]。
-
-            model_input_text = ...  # YOUR CODE HERE
-            targets = ...          # YOUR CODE HERE
-            # --- END OF STUDENT TASK 1 ---
-
-            logits, num_visual_tokens = mllm(images, model_input_text)
-
-            # --- START OF STUDENT TASK 2 (CRITICAL) ---
-            # TODO: 计算损失。这是 MLLM 训练中最关键的一步。
-            #
-            # 问题: `logits` 的序列长度是 (视觉token数量 + 文本token数量)。
-            # 但我们只想让模型学会预测文本部分，而不关心它对视觉token的预测。
-            # 因此，我们需要在计算损失时“忽略”掉对应视觉token位置的预测。
-            #
-            # 解决方案: 使用 `criterion.ignore_index` (它等于 pad_token_id)。
-            # `CrossEntropyLoss` 会自动忽略 `labels` 中值为 `ignore_index` 的位置。
-            #
-            # 步骤:
-            # 1. 创建一个 `labels` 张量，其形状与 `logits` 的前两个维度相同 ([B, SeqLen])。
-            #    用 `criterion.ignore_index` 将其完全填充。
-            #    提示: 使用 `torch.full()`。
-            # 2. 计算出文本 `targets` 在 `labels` 张量中应该被放置的起始和结束索引。
-            #    文本内容紧跟在视觉token之后。`num_visual_tokens` 变量会告诉你视觉token的数量。
-            # 3. 将真实的 `targets` "粘贴" 到 `labels` 张量的正确位置上。
-            #    这样 `labels` 就变成了 `[ignore, ignore, ..., target_1, target_2, ...]` 的形式。
-            # 4. 最后，计算损失。将 `logits` 和 `labels` 都展平 (view(-1)) 后传入 `criterion`。
-
-            # 步骤 1: 创建一个填满 ignore_index 的 labels 张量
-            labels = ...  # YOUR CODE HERE
-
-            # 步骤 2: 确定 targets 的起止位置
-            label_start_idx = ...  # YOUR CODE HERE
-            label_end_idx = ...   # YOUR CODE HERE
-
-            # 步骤 3: 将 targets 放置到 labels 的正确位置
-            # YOUR CODE HERE
-
-            # 步骤 4: 计算损失
-            loss = ...  # YOUR CODE HERE
-            # --- END OF STUDENT TASK 2 ---
-
-            loss.backward()
-            optimizer.step()
-            total_train_loss += loss.item()
-            train_loop.set_postfix(loss=loss.item())
-
-        avg_train_loss = total_train_loss / len(train_loader)
+        avg_train_loss = train_one_epoch(
+            mllm, train_loader, optimizer, criterion, device, epoch)
 
         # --- Evaluation Phase ---
         if (epoch + 1) % train_cfg['eval_interval'] == 0:
@@ -195,19 +184,17 @@ def train(config):
                     images, captions = images.to(device), captions.to(device)
                     model_input_text = captions[:, :-1]
                     targets = captions[:, 1:]
+
                     logits, num_visual_tokens = mllm(images, model_input_text)
 
-                    # --- START OF STUDENT TASK 3 ---
-                    # TODO: 在评估阶段应用与训练阶段完全相同的损失计算逻辑。
-                    # 重复上面的步骤 1-4，以计算验证集上的损失。
+                    labels = torch.full(
+                        (logits.shape[0], logits.shape[1]), criterion.ignore_index, device=device, dtype=torch.long)
+                    label_start_idx = num_visual_tokens
+                    label_end_idx = num_visual_tokens + targets.shape[1]
+                    labels[:, label_start_idx:label_end_idx] = targets
 
-                    labels = ...  # YOUR CODE HERE
-                    label_start_idx = ...  # YOUR CODE HERE
-                    label_end_idx = ...  # YOUR CODE HERE
-                    # YOUR CODE HERE (place targets)
-
-                    loss = ...  # YOUR CODE HERE
-                    # --- END OF STUDENT TASK 3 ---
+                    loss = criterion(
+                        logits.view(-1, logits.size(-1)), labels.view(-1))
 
                     total_val_loss += loss.item()
                     val_loop.set_postfix(loss=loss.item())
