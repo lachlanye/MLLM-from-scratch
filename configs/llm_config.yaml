@@ -27,7 +27,7 @@ training_params:
   batch_size: 64
   learning_rate: 0.0003
   weight_decay: 0.01
-  num_epochs: 50
+  num_epochs: 100
   # Device can be 'cuda', 'cpu', or 'mps' for Apple Silicon
   device: "cuda"
   num_workers: 4
