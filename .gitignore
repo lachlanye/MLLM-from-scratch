@@ -1,4 +1,4 @@
-notebooks/vit_cifar10_colab.ipynb
+notebooks/
 __pycache__/
 *.pyc
 .DS_Store
