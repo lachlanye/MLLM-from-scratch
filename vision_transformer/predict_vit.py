@@ -90,7 +90,8 @@ if __name__ == "__main__":
     import argparse
     from utils.config_parser import parse_config
 
-    parser = argparse.ArgumentParser(description="Predict using trained ViT model")
+    parser = argparse.ArgumentParser(
+        description="Predict using trained ViT model")
     parser.add_argument("--config", type=str, default="configs/vit_config.yaml",
                         help="Path to YAML config file")
     parser.add_argument("--image", type=str, default=None,
@@ -98,7 +99,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     cfg = parse_config(args.config)
-    
+
     if args.image:
         cfg['prediction_params']['image_source'] = args.image
 
