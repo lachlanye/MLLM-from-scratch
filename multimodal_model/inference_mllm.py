@@ -67,10 +67,34 @@ def inference(config: dict):
     tokenizer.load_vocab(paths_cfg['tokenizer_save_path'])
     vocab_size = tokenizer.get_vocab_size()
 
-    # --- 3. Initialize Model Architecture (already done) ---
-    vision_encoder = ViT(...).to(device)  # Simplified for brevity
-    language_model = GPTModel(...).to(device)  # Simplified for brevity
-    connector = Connector(...).to(device)  # Simplified for brevity
+    # --- 3. Initialize Model Architecture ---
+    vision_encoder = ViT(
+        img_size=model_cfg['vision_encoder']['image_size'],
+        patch_size=model_cfg['vision_encoder']['patch_size'],
+        in_channels=model_cfg['vision_encoder']['in_channels'],
+        d_model=model_cfg['vision_encoder']['vision_dim'],
+        num_layers=model_cfg['vision_encoder']['n_layers'],
+        n_heads=model_cfg['vision_encoder']['n_heads'],
+        d_ff=model_cfg['vision_encoder']['d_ff'],
+        dropout=model_cfg['dropout']
+    ).to(device)
+
+    language_model = GPTModel(
+        vocab_size=vocab_size,
+        d_model=model_cfg['language_model']['language_dim'],
+        num_layers=model_cfg['language_model']['n_layers'],
+        n_heads=model_cfg['language_model']['n_heads'],
+        d_ff=model_cfg['language_model']['d_ff'],
+        max_len=model_cfg['language_model']['max_len'],
+        dropout=model_cfg['dropout']
+    ).to(device)
+
+    connector = Connector(
+        vision_dim=model_cfg['vision_encoder']['vision_dim'],
+        language_dim=model_cfg['language_model']['language_dim'],
+        connector_type=model_cfg['connector']['type']
+    ).to(device)
+
     mllm = MLLM(vision_encoder, language_model,
                 connector, tokenizer).to(device)
     print("MLLM architecture built successfully.")

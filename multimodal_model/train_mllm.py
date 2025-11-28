@@ -109,26 +109,27 @@ def train(config):
     vision_encoder = ViT(
         img_size=model_cfg['vision_encoder']['image_size'],
         patch_size=model_cfg['vision_encoder']['patch_size'],
-        in_chans=model_cfg['vision_encoder']['in_chans'],
-        embed_dim=model_cfg['vision_encoder']['embed_dim'],
-        depth=model_cfg['vision_encoder']['depth'],
-        num_heads=model_cfg['vision_encoder']['num_heads'],
-        mlp_ratio=model_cfg['vision_encoder']['mlp_ratio'],
+        in_channels=model_cfg['vision_encoder']['in_channels'],
+        d_model=model_cfg['vision_encoder']['vision_dim'],
+        num_layers=model_cfg['vision_encoder']['n_layers'],
+        n_heads=model_cfg['vision_encoder']['n_heads'],
+        d_ff=model_cfg['vision_encoder']['d_ff'],
         dropout=model_cfg['dropout']
     ).to(device)
 
     language_model = GPTModel(
         vocab_size=vocab_size,
-        d_model=model_cfg['language_model']['d_model'],
-        n_head=model_cfg['language_model']['n_head'],
-        n_layer=model_cfg['language_model']['n_layer'],
+        d_model=model_cfg['language_model']['language_dim'],
+        num_layers=model_cfg['language_model']['n_layers'],
+        n_heads=model_cfg['language_model']['n_heads'],
+        d_ff=model_cfg['language_model']['d_ff'],
         max_len=model_cfg['language_model']['max_len'],
         dropout=model_cfg['dropout']
     ).to(device)
 
     connector = Connector(
-        vision_dim=model_cfg['vision_encoder']['embed_dim'],
-        language_dim=model_cfg['language_model']['d_model'],
+        vision_dim=model_cfg['vision_encoder']['vision_dim'],
+        language_dim=model_cfg['language_model']['language_dim'],
         connector_type=model_cfg['connector']['type']
     ).to(device)
 
