@@ -76,7 +76,7 @@ def inference(config: dict):
         num_layers=model_cfg['vision_encoder']['n_layers'],
         n_heads=model_cfg['vision_encoder']['n_heads'],
         d_ff=model_cfg['vision_encoder']['d_ff'],
-        dropout=model_cfg['dropout']
+        dropout=model_cfg['vision_encoder']['dropout']
     ).to(device)
 
     language_model = GPTModel(
@@ -86,7 +86,7 @@ def inference(config: dict):
         n_heads=model_cfg['language_model']['n_heads'],
         d_ff=model_cfg['language_model']['d_ff'],
         max_len=model_cfg['language_model']['max_len'],
-        dropout=model_cfg['dropout']
+        dropout=model_cfg['language_model']['dropout']
     ).to(device)
 
     connector = Connector(
